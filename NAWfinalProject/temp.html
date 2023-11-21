@@ -1,0 +1,252 @@
+
+<html>
+    <head>
+        <style type='text/css'>
+            *{
+                --numColumns: 20;
+                --numColumnsOne: 21;
+            }
+            #screen{
+                display: grid;
+                height: 100%;
+                grid-template-rows: 10% 90%;
+                grid-template-columns: 100%;
+                align-items: center;
+                background-color: orange;
+            }
+            header{
+                width: 100%;
+                height: 100%;
+                text-align: center;
+                display: block;
+                grid-row: 1;
+                grid-column: 1/2;
+            }
+            #interactiveArea{
+                width: 100%;
+                height: 100%;
+                background-color: purple;
+                grid-column: 1/2;
+                display: grid;
+                grid-template-rows: 15% 70% 15%;
+                grid-template-columns: repeat(5, auto)
+            }
+            #canvas{
+                width: 100%;
+                height: 100%;
+                grid-row: 2;
+                grid-column: 2/5;
+                display: grid;
+                grid-template-columns: repeat(var(--numColumns), auto);
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
+            }
+            #overlay{
+                width: 100%;
+                height: 100%;
+                background-image: "";
+                background-image: url("assets/0/0.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
+                grid-column: 1/var(--numColumnsOne);
+                display: grid;
+                grid-template-columns: repeat(5, 20%);
+                grid-template-rows: repeat(10, 10%);
+            }
+            #arrowKeys{
+                width: 100%;
+                height: 100%;
+                grid-row: 2;
+                grid-column: 1/2;
+                background: green;
+            }
+            #numberKeys{
+                width: 100%;
+                height: 100%;
+                grid-row: 2;
+                grid-column: 5/6;
+                background: yellow;
+            }
+            .TButton{
+                display: flex;
+                background-color: blue;
+                color: white;
+                text-align: center;
+                grid-column: 4;
+                overflow: auto;
+                justify-content: center;
+                margin-top: 10%;
+                font-family: 'Times New Roman', Times, serif;
+            }
+            .TButton:hover{
+                background: cyan;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="screen"> 
+            <header>Women in STEM</header>
+            <div id="interactiveArea">
+                <div id="canvas">
+                    <div id="overlay"></div>
+                </div>
+                <div id="arrowKeys">
+                    <button id="leftButton">⬅️</button>
+                    <button id="rightButton">➡️</button>
+                </div>
+                <div id="numberKeys"></div>
+            </div>
+        </div>
+        <script>
+            let images = [];
+            let index = 0;
+            let stage = 0;
+            let old = document.getElementById("canvas");
+            let next = getNext();
+            let speed = 10;
+            let timeLineHeaders = ["Natural Sciences", "Mathematics", "Engineering", "Computer Science"]
+            images = window.init();
+            
+            //Functions
+            /**
+             * Initilizes the webpage. Creates images list from assets folder
+             * @returns {List} Returns the images list with correct formatting for access
+            */
+            function init(){
+                let amounts = [[2], [11]]
+                temp = []
+                for(let e =0; e<amounts.length; e++){
+                    for(let g = 0; g<amounts[e]; g++){
+                        temp.push("assets/"+String(e)+"/"+String(g)+".png")
+                    }
+                images.push(temp)
+                temp = []
+                }
+                return images;
+            }
+
+            //Right button
+            document.querySelector("#rightButton").onclick = function() { 
+                if(index+1 < images[stage].length){
+                    index +=1;
+                    next = getNext()
+                    slideLR(old, next, index)
+                }
+            } 
+            //Left button
+            document.querySelector("#leftButton").onclick = function() { 
+                if(index-1 < images[stage].length && index-1 >= 0){
+                    index -=1;
+                    next = getNext()
+                    slideLR(old, next, index)
+                }
+            }
+
+            /**
+             * Sets the value of stage
+            */
+            function setStage(num){
+                stage = num;
+                slideLR(old, getNext(), 0)
+            }
+            
+            /**
+             * Gets the value of overlay since it is added and deleted
+             * @returns {Element} Returns overlay HTML element
+            */
+            function getNext(){
+                return document.getElementById("overlay")
+            }
+            /**
+             * Adds buttons for navigation on timeline pages
+             * @returns {Boolean} Returns true if code was run, false is not
+            */
+            function timeLines(){
+                next = getNext();
+                if(stage == 0 && index == 1){
+                    for(let q = 0; q<timeLineHeaders.length; q++){
+                        let newChild = document.createElement("button")
+                        newChild.classList.add("TButton");
+                        newChild.id = q;
+                        next.appendChild(newChild)
+                    }
+                    let locations = [2, 4, 6, 8]
+                    for(let r = 0; r<locations.length; r++){
+                        let one = document.getElementById(String(r))
+                        one.style.gridRow = locations[r];
+                        one.addEventListener("click", function(){
+                            setStage(r+1)
+                        });
+                        one.innerHTML = timeLineHeaders[r]
+                    }
+                    return true
+                }
+                if(stage == 1 && index == 1){
+                    for(let q = 0; q<5; q++){
+                        let newChild = document.createElement("button")
+                        newChild.classList.add("TButton");
+                        newChild.id = q;
+                        next.appendChild(newChild);
+                    }
+                    for(let r = 0; r<5; r++){
+                        let one = document.getElementById(String(r))
+                        one.style.gridColumn = r+1;
+                        if(r%2 == 0){
+                            one.style.gridRow = 4;
+                        }else{
+                            one.style.gridRow = 5;
+                        }
+                        one.addEventListener("click", function(){
+                            //CODE GOES HERE
+                            console.log("This is here so the program isn't angry")
+                        });
+                        one.innerHTML = r;
+                    }
+                    return true
+                }
+                return false;
+
+            }
+            /**
+             * Asynchronous function that animates the images sliding on and off the screen
+             * @param {HTML element} the canvas the document is using
+             * @param {HTML element} the overlay where the new image will be drawn
+             * @param {int} the new index the program is going to (the invidiual slide in the set)
+            */
+            async function slideLR(old, next, index){
+                old.style.backgroundImage = "url("+images[stage][index]+")"
+                next.style.gridColumn = "1/4";
+                let maxCols = Number(getComputedStyle(next).getPropertyValue('--numColumnsOne'))+1
+                
+                for(let i = 0; i< maxCols; i++){
+                    next.style.gridColumn = "1/"+String(maxCols-i)
+                    await sleep(speed);
+                    if(i == maxCols-1){
+                        if(!(next == null)){
+                            old.removeChild(next)
+                        }
+                        let newChild = document.createElement("overlay")
+                        newChild.id = "overlay"
+                        newChild.style.backgroundImage = old.style.backgroundImage
+                        old.appendChild(newChild)
+                    }
+                }
+                if((stage == 0 && index == 1) || (stage == 1 && index == 0)){
+                    timeLines()
+                }
+            }
+
+            /**
+             * Delays execution of async function slideLR
+             * @params ms {int} milliseconds to wait
+             * @returns {Promise} Returns a promise
+            */
+
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        </script>
+    </body>
+</html>
