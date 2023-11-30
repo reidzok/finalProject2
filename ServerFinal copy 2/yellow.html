@@ -1,0 +1,207 @@
+<html>
+    <head>
+        <style type="text/css">
+            #screen{
+                display: grid;
+                height: 100%;
+                width: 100%;
+                grid-template-rows: 10% 90%;
+                grid-template-columns: 100%;
+                align-items: center;
+                background-color: orange;
+            }
+            .header{
+                text-align: center;
+                display: block;
+                grid-row: 1;
+                grid-column: 1/2;
+            }
+            #seperate{
+                display: grid;
+                height: 100%;
+                width: 100%;
+                grid-template-rows: repeat(21, auto);
+                grid-template-columns: repeat(5, auto);
+            }
+            .inside{
+                grid-column: 1/2;
+            }
+            #solutions{
+                grid-column: 3/4;
+            }
+            #answerContainer{
+                grid-column: 2/3;
+                grid-row: 1/20;
+            }
+        </style>
+    </head>
+    <body>
+        <screen id="screen">
+            <header class="header">BEANS</header>
+            <div id="seperate">
+                <div id="answerContainer"></div>
+            </div>
+            
+        </screen>
+        <script>
+            let numQuestions = 10;
+            let numAnswers = 4;
+            const questions = loadFile("/questions").split("\n")
+            let answers = loadFile("/answers").split("\n")
+            let peer = [];
+            for(let r = 0; r<answers.length; r++){
+                peer.push(answers[r].split(','))
+            }
+            let qOrder = randomOrder([...Array(10).keys()], 10)
+            //let qOrder = [9,8,7,6,5,4,3,2,1,0]
+            console.log(qOrder)
+
+            const labels = ["FIRST", "SECOND", "THIRD", "FOURTH"]
+            const mainForm = document.getElementById("seperate")
+            const answerArea = document.getElementById("answerContainer")
+
+            //Creates the questions
+            for(let j = 0; j < numQuestions; j++){
+                let newForm = document.createElement("form")
+                let newQuestion = document.createElement("div")
+                //console.log(String(qOrder[j]))
+                newForm.setAttribute("id", "div"+String(qOrder[j]))
+                newQuestion.setAttribute("id", "Q"+String(qOrder[j]))
+                console.log(String(j))
+                newQuestion.classList.add("inside")
+                newForm.classList.add("inside")
+                newQuestion.innerHTML = questions[qOrder[j]]
+                mainForm.appendChild(newQuestion)
+                mainForm.appendChild(newForm)
+            }
+
+            //Answers
+            for(let i = 0; i < numQuestions; i++){
+                let formLocation = document.getElementById("div"+String(i))
+                let orderAns = randomOrder(peer[i], 4)
+                for(let g = 0; g<numAnswers; g++){
+                    let newRadio = document.createElement("INPUT")
+                    newRadio.setAttribute("type", "radio")
+                    newRadio.setAttribute("name", "radio")
+                    let newLabel = document.createElement("LABEL")
+                    newLabel.setAttribute("for", "radio")
+                    value = orderAns[g].trim()
+                    newLabel.innerHTML = value
+                    newRadio.setAttribute("id", value)
+                    newRadio.classList.add(i)
+                    formLocation.appendChild(newRadio)
+                    formLocation.appendChild(newLabel)
+                }
+            }
+            let newButton = document.createElement("BUTTON")
+            newButton.setAttribute("id", "button")
+            newButton.innerHTML = "CHECK"
+            mainForm.appendChild(newButton)
+            document.querySelector("#button").onclick = function() { 
+                console.log("hehe")
+                //NOTTEMP
+
+                let NOTTEMP = numberAnswers()
+                if((typeof NOTTEMP) != "boolean"){
+                    let temp = check(NOTTEMP, peer)
+                    temp.then(function(data){
+                    let correctness = data[0]
+                    let trueAnswers = data[1]
+                    handleData(correctness, trueAnswers)
+                })
+                }
+                //NOTTEMP
+                /*
+                let TEMPORARY = {0: 'Blue', 1: 'c', 2: '3', 3: 'October 30', 4: '11', 5: 'At 4:30', 6: 'Dragon', 7: '6', 8: 'January 11', 9: 'Yes'}
+                let temp = check(TEMPORARY, peer)
+                    temp.then(function(data){
+                    let correctness = data[0]
+                    let trueAnswers = data[1]
+                    handleData(correctness, trueAnswers)})
+                */
+                //TRYING TO GET BACK CORRECTNESS AND TRUE ANSWERS
+            }
+        
+            function loadFile(filePath) {
+                let result = null;
+                let xmlhttp = new XMLHttpRequest();
+                xmlhttp.open("GET", filePath, false);
+                xmlhttp.send();
+                if (xmlhttp.status==200) {
+                    result = xmlhttp.responseText;
+            }
+                return result;
+            }
+
+            function randomOrder(answers, length){
+                let order = []
+                while(order.length != length){
+                    let number = Math.floor(Math.random()*length)
+                    if(order.includes(number) == false){
+                        order.push(number)
+                    }
+                }
+                for(let i = 0; i<order.length;i++){
+                    let location = order.indexOf(i)
+                    order[location] = answers[i]
+                }
+                return order;
+            }
+
+            async function check(values, answers){
+                settings = {
+                        method: "POST",
+                        body: JSON.stringify({
+                            value: values,
+                            answer: answers
+                        }),
+                        headers:{
+                            "Content-type": "application/json; charset=UTF-8"
+                        }
+                    }
+                const fetchResponse = await fetch('/check', settings)
+                let data = await fetchResponse.json()
+                let checked = data["submittedAnswerCorrect"]
+                let correct = data["correctAnswers"]
+                return [checked, correct]
+            }
+
+            function numberAnswers() {
+                let allRadio = document.getElementsByName("radio")
+                let counter = 0;
+                let checked = []
+                let qa = {}
+                for (let i=0; i<allRadio.length; i++) {
+                    if(allRadio[i].checked ){
+                        counter +=1
+                        qa[allRadio[i].className] = allRadio[i].id
+                        checked.push(allRadio[i])
+                    }
+                }
+                if(counter == numQuestions){
+                    return qa
+                }
+                alert("Please select an answer for each question")
+                return false
+            }
+
+            function handleData(correctness, trueAnswers){
+                for(let y = 0; y < numQuestions; y++){
+                    let value = correctness[y]
+                    //console.log(value, trueAnswers[qOrder[y]])
+                    console.log("accessing in the order of:", qOrder[y])
+                    let putHere = document.getElementById("Q"+y)
+                    if(value == true){
+                        //console.log(putHere.innerHTML)
+                        putHere.innerHTML = "✅&nbsp" + putHere.innerHTML
+                    }else{
+                        putHere.innerHTML = "❌&nbsp" + putHere.innerHTML
+                    }
+                }
+                return true
+            }
+
+            
+        </script>
+    </body>
+</html>
